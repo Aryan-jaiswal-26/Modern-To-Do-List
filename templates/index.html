@@ -6,6 +6,7 @@
     <title>Modern Todo List</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,7 +14,22 @@
             <header class="header">
                 <div class="user-info">
                     <span class="welcome">Welcome, {{ username }}!</span>
-                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                    <div class="user-actions">
+                        <button class="theme-toggle" id="theme-toggle">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <a href="/analytics" class="analytics-btn">
+                            <i class="fas fa-chart-bar"></i>
+                        </a>
+                        <button class="workspace-btn" id="workspace-btn">
+                            <i class="fas fa-users"></i>
+                        </button>
+                        <button class="notification-btn" id="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-count" id="notification-count">0</span>
+                        </button>
+                        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                    </div>
                 </div>
                 <h1><i class="fas fa-tasks"></i> Todo List</h1>
                 <div class="stats">
@@ -39,9 +55,18 @@
                     <select id="goal-select">
                         <option value="">No Goal</option>
                     </select>
+                    <input type="date" id="due-date" class="due-date-input">
                     <button type="submit"><i class="fas fa-plus"></i></button>
                 </div>
             </form>
+
+            <div class="workspace-section">
+                <h3><i class="fas fa-users"></i> Workspace</h3>
+                <select id="workspace-select" class="workspace-select">
+                    <option value="">Personal Workspace</option>
+                </select>
+                <div class="online-users" id="online-users"></div>
+            </div>
 
             <div class="goals-section">
                 <h3><i class="fas fa-bullseye"></i> Goals</h3>
@@ -70,15 +95,22 @@
             constructor() {
                 this.todos = [];
                 this.goals = [];
+                this.workspaces = [];
+                this.currentWorkspace = null;
                 this.filter = 'all';
+                this.socket = io();
                 this.init();
             }
 
             init() {
                 this.bindEvents();
+                this.setupSocketEvents();
                 this.loadTodos();
                 this.loadGoals();
+                this.loadWorkspaces();
                 this.loadStreak();
+                this.loadTheme();
+                this.loadNotifications();
             }
 
             bindEvents() {
@@ -100,6 +132,30 @@
                 document.getElementById('add-goal-btn').addEventListener('click', () => {
                     this.showAddGoalModal();
                 });
+
+                document.getElementById('theme-toggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+
+                document.getElementById('workspace-btn').addEventListener('click', () => {
+                    this.showWorkspaceModal();
+                });
+
+                document.getElementById('notification-btn').addEventListener('click', () => {
+                    this.showNotifications();
+                });
+
+                document.getElementById('workspace-select').addEventListener('change', (e) => {
+                    this.switchWorkspace(e.target.value);
+                });
+
+                document.getElementById('todo-input').addEventListener('input', () => {
+                    this.handleTyping(true);
+                });
+
+                document.getElementById('todo-input').addEventListener('blur', () => {
+                    this.handleTyping(false);
+                });
             }
 
             async loadTodos() {
@@ -112,6 +168,7 @@
                 const input = document.getElementById('todo-input');
                 const priority = document.getElementById('priority-select').value;
                 const goalId = document.getElementById('goal-select').value;
+                const dueDate = document.getElementById('due-date').value;
                 
                 if (!input.value.trim()) return;
 
@@ -121,13 +178,15 @@
                     body: JSON.stringify({ 
                         text: input.value, 
                         priority,
-                        goal_id: goalId || null
+                        goal_id: goalId || null,
+                        due_date: dueDate || null
                     })
                 });
 
                 const newTodo = await response.json();
                 this.todos.push(newTodo);
                 input.value = '';
+                document.getElementById('due-date').value = '';
                 
                 if (goalId) {
                     await this.updateGoalProgress(parseInt(goalId));
@@ -289,6 +348,201 @@
                     navigator.clipboard.writeText(data.share_url);
                     alert('Share link copied to clipboard!');
                 }
+            }
+
+            async loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.body.classList.toggle('dark-theme', theme === 'dark');
+                const icon = document.querySelector('#theme-toggle i');
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            async toggleTheme() {
+                const isDark = document.body.classList.contains('dark-theme');
+                const newTheme = isDark ? 'light' : 'dark';
+                
+                document.body.classList.toggle('dark-theme');
+                localStorage.setItem('theme', newTheme);
+                
+                const icon = document.querySelector('#theme-toggle i');
+                icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                
+                await fetch('/api/theme', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme: newTheme })
+                });
+            }
+
+            async loadNotifications() {
+                const response = await fetch('/api/notifications');
+                const notifications = await response.json();
+                document.getElementById('notification-count').textContent = notifications.length;
+            }
+
+            showNotifications() {
+                alert('Notifications feature - check console for details');
+                console.log('Notifications panel would open here');
+            }
+
+            showWorkspaceModal() {
+                const name = prompt('Workspace name:');
+                if (name) {
+                    this.createWorkspace(name);
+                }
+            }
+
+            async createWorkspace(name) {
+                const response = await fetch('/api/workspaces', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description: '' })
+                });
+                const workspace = await response.json();
+                this.workspaces.push(workspace);
+                this.updateWorkspaceSelect();
+            }
+
+            async loadWorkspaces() {
+                const response = await fetch('/api/workspaces');
+                this.workspaces = await response.json();
+                this.updateWorkspaceSelect();
+            }
+
+            updateWorkspaceSelect() {
+                const select = document.getElementById('workspace-select');
+                const workspaceOptions = this.workspaces.map(workspace => 
+                    `<option value="${workspace.id}">${workspace.name}</option>`
+                ).join('');
+                select.innerHTML = '<option value="">Personal Workspace</option>' + workspaceOptions;
+            }
+
+            switchWorkspace(workspaceId) {
+                if (this.currentWorkspace) {
+                    this.socket.emit('leave_workspace', { workspace_id: this.currentWorkspace });
+                }
+                
+                this.currentWorkspace = workspaceId || null;
+                
+                if (workspaceId) {
+                    this.socket.emit('join_workspace', { workspace_id: workspaceId });
+                }
+                
+                this.loadTodos();
+            }
+
+            setupSocketEvents() {
+                this.socket.on('user_joined', (data) => {
+                    this.showNotification(data.message, 'info');
+                    this.updateOnlineUsers();
+                });
+
+                this.socket.on('user_left', (data) => {
+                    this.showNotification(data.message, 'info');
+                    this.updateOnlineUsers();
+                });
+
+                this.socket.on('todo_updated', (data) => {
+                    this.showNotification(`${data.user} ${data.action} a todo`, 'success');
+                    this.loadTodos();
+                });
+
+                this.socket.on('user_typing', (data) => {
+                    this.showTypingIndicator(data.user, data.typing);
+                });
+            }
+
+            handleTyping(isTyping) {
+                if (this.currentWorkspace) {
+                    this.socket.emit('typing', {
+                        workspace_id: this.currentWorkspace,
+                        typing: isTyping
+                    });
+                }
+            }
+
+            showNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 1rem;
+                    border-radius: 8px;
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease;
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+
+            showTypingIndicator(user, isTyping) {
+                const indicator = document.getElementById('typing-indicator') || document.createElement('div');
+                indicator.id = 'typing-indicator';
+                indicator.style.cssText = `
+                    color: rgba(255,255,255,0.6);
+                    font-size: 0.8rem;
+                    margin-top: 0.5rem;
+                `;
+                
+                if (isTyping) {
+                    indicator.textContent = `${user} is typing...`;
+                    document.querySelector('.add-form').appendChild(indicator);
+                } else {
+                    indicator.remove();
+                }
+            }
+
+            updateOnlineUsers() {
+                // Placeholder for online users display
+                const container = document.getElementById('online-users');
+                container.innerHTML = '<span class="online-indicator">🟢 Collaborative mode active</span>';
+            }
+
+            async addTodo() {
+                const input = document.getElementById('todo-input');
+                const priority = document.getElementById('priority-select').value;
+                const goalId = document.getElementById('goal-select').value;
+                const dueDate = document.getElementById('due-date').value;
+                
+                if (!input.value.trim()) return;
+
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        text: input.value, 
+                        priority,
+                        goal_id: goalId || null,
+                        due_date: dueDate || null,
+                        workspace_id: this.currentWorkspace
+                    })
+                });
+
+                const newTodo = await response.json();
+                this.todos.push(newTodo);
+                input.value = '';
+                document.getElementById('due-date').value = '';
+                
+                if (goalId) {
+                    await this.updateGoalProgress(parseInt(goalId));
+                }
+                
+                // Emit real-time update
+                if (this.currentWorkspace) {
+                    this.socket.emit('todo_update', {
+                        workspace_id: this.currentWorkspace,
+                        todo: newTodo,
+                        action: 'added'
+                    });
+                }
+                
+                this.render();
+                this.loadStreak();
             }
         }
 

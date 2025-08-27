@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Todo App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="todo-app">
+            <header class="header">
+                <div class="user-info">
+                    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+                    <span class="welcome">Analytics Dashboard</span>
+                </div>
+                <h1><i class="fas fa-chart-bar"></i> Your Progress</h1>
+            </header>
+
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+                    <div class="stat-info">
+                        <h3 id="total-todos">0</h3>
+                        <p>Total Tasks</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h3 id="completed-todos">0</h3>
+                        <p>Completed</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="stat-info">
+                        <h3 id="completion-rate">0%</h3>
+                        <p>Completion Rate</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                    <div class="stat-info">
+                        <h3 id="current-streak">0</h3>
+                        <p>Day Streak</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Priority Distribution</h3>
+                    <canvas id="priorityChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Goals Progress</h3>
+                    <canvas id="goalsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Analytics {
+            constructor() {
+                this.loadAnalytics();
+            }
+
+            async loadAnalytics() {
+                const response = await fetch('/api/analytics');
+                const data = await response.json();
+                
+                document.getElementById('total-todos').textContent = data.total_todos;
+                document.getElementById('completed-todos').textContent = data.completed_todos;
+                document.getElementById('completion-rate').textContent = data.completion_rate + '%';
+                document.getElementById('current-streak').textContent = data.streak;
+
+                this.createPriorityChart(data.priority_breakdown);
+                this.createGoalsChart(data);
+            }
+
+            createPriorityChart(priorities) {
+                const ctx = document.getElementById('priorityChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High', 'Medium', 'Low'],
+                        datasets: [{
+                            data: [priorities.high, priorities.medium, priorities.low],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'white' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createGoalsChart(data) {
+                const ctx = document.getElementById('goalsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total Goals', 'Completed Goals'],
+                        datasets: [{
+                            data: [data.total_goals, data.completed_goals],
+                            backgroundColor: ['#667eea', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            x: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        new Analytics();
+    </script>
+</body>
+</html>
