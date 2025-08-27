@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Todo List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="todo-app">
+            <header class="header">
+                <div class="user-info">
+                    <span class="welcome">Welcome, {{ username }}!</span>
+                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+                <h1><i class="fas fa-tasks"></i> Todo List</h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <i class="fas fa-fire"></i>
+                        <span id="streak-count">0</span> day streak
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="total-count">0</span> tasks
+                    </div>
+                </div>
+            </header>
+
+            <form class="add-form" id="add-form">
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="Add a new task..." required>
+                    <select id="priority-select">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <select id="goal-select">
+                        <option value="">No Goal</option>
+                    </select>
+                    <button type="submit"><i class="fas fa-plus"></i></button>
+                </div>
+            </form>
+
+            <div class="goals-section">
+                <h3><i class="fas fa-bullseye"></i> Goals</h3>
+                <div class="goals-container" id="goals-container"></div>
+                <button class="add-goal-btn" id="add-goal-btn">
+                    <i class="fas fa-plus"></i> Add Goal
+                </button>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+            </div>
+
+            <ul class="todo-list" id="todo-list"></ul>
+
+            <div class="footer">
+                <button id="clear-completed" class="clear-btn">Clear Completed</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TodoApp {
+            constructor() {
+                this.todos = [];
+                this.goals = [];
+                this.filter = 'all';
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadTodos();
+                this.loadGoals();
+                this.loadStreak();
+            }
+
+            bindEvents() {
+                document.getElementById('add-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTodo();
+                });
+
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setFilter(e.target.dataset.filter);
+                    });
+                });
+
+                document.getElementById('clear-completed').addEventListener('click', () => {
+                    this.clearCompleted();
+                });
+
+                document.getElementById('add-goal-btn').addEventListener('click', () => {
+                    this.showAddGoalModal();
+                });
+            }
+
+            async loadTodos() {
+                const response = await fetch('/api/todos');
+                this.todos = await response.json();
+                this.render();
+            }
+
+            async addTodo() {
+                const input = document.getElementById('todo-input');
+                const priority = document.getElementById('priority-select').value;
+                const goalId = document.getElementById('goal-select').value;
+                
+                if (!input.value.trim()) return;
+
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        text: input.value, 
+                        priority,
+                        goal_id: goalId || null
+                    })
+                });
+
+                const newTodo = await response.json();
+                this.todos.push(newTodo);
+                input.value = '';
+                
+                if (goalId) {
+                    await this.updateGoalProgress(parseInt(goalId));
+                }
+                
+                this.render();
+                this.loadStreak();
+            }
+
+            async toggleTodo(id) {
+                const todo = this.todos.find(t => t.id === id);
+                todo.completed = !todo.completed;
+
+                await fetch(`/api/todos/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completed: todo.completed })
+                });
+
+                this.render();
+                this.loadStreak();
+            }
+
+            async deleteTodo(id) {
+                await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+                this.todos = this.todos.filter(t => t.id !== id);
+                this.render();
+            }
+
+            setFilter(filter) {
+                this.filter = filter;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.filter === filter);
+                });
+                this.render();
+            }
+
+            async clearCompleted() {
+                const completed = this.todos.filter(t => t.completed);
+                for (const todo of completed) {
+                    await this.deleteTodo(todo.id);
+                }
+            }
+
+            getFilteredTodos() {
+                switch (this.filter) {
+                    case 'active': return this.todos.filter(t => !t.completed);
+                    case 'completed': return this.todos.filter(t => t.completed);
+                    default: return this.todos;
+                }
+            }
+
+            render() {
+                const list = document.getElementById('todo-list');
+                const filteredTodos = this.getFilteredTodos();
+
+                list.innerHTML = filteredTodos.map(todo => `
+                    <li class="todo-item ${todo.completed ? 'completed' : ''} priority-${todo.priority}" data-id="${todo.id}">
+                        <div class="todo-content">
+                            <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                                   onchange="app.toggleTodo(${todo.id})">
+                            <span class="todo-text">${todo.text}</span>
+                            <span class="priority-badge">${todo.priority}</span>
+                        </div>
+                        <div class="todo-actions">
+                            <button class="share-btn" onclick="app.shareTodo(${todo.id})">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="delete-btn" onclick="app.deleteTodo(${todo.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </li>
+                `).join('');
+
+                document.getElementById('total-count').textContent = this.todos.length;
+            }
+
+            async loadGoals() {
+                const response = await fetch('/api/goals');
+                this.goals = await response.json();
+                this.renderGoals();
+                this.updateGoalSelect();
+            }
+
+            async loadStreak() {
+                const response = await fetch('/api/streak');
+                const data = await response.json();
+                document.getElementById('streak-count').textContent = data.streak;
+            }
+
+            renderGoals() {
+                const container = document.getElementById('goals-container');
+                container.innerHTML = this.goals.map(goal => `
+                    <div class="goal-item">
+                        <div class="goal-info">
+                            <span class="goal-title">${goal.title}</span>
+                            <div class="goal-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${(goal.current / goal.target) * 100}%"></div>
+                                </div>
+                                <span class="progress-text">${goal.current}/${goal.target}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateGoalSelect() {
+                const select = document.getElementById('goal-select');
+                const currentOptions = select.innerHTML;
+                const goalOptions = this.goals.map(goal => 
+                    `<option value="${goal.id}">${goal.title}</option>`
+                ).join('');
+                select.innerHTML = '<option value="">No Goal</option>' + goalOptions;
+            }
+
+            showAddGoalModal() {
+                const title = prompt('Goal title:');
+                const target = prompt('Target number:');
+                if (title && target) {
+                    this.addGoal(title, parseInt(target));
+                }
+            }
+
+            async addGoal(title, target) {
+                const response = await fetch('/api/goals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, target })
+                });
+                const newGoal = await response.json();
+                this.goals.push(newGoal);
+                this.renderGoals();
+                this.updateGoalSelect();
+            }
+
+            async updateGoalProgress(goalId) {
+                await fetch(`/api/goals/${goalId}/progress`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                this.loadGoals();
+            }
+
+            async shareTodo(id) {
+                const response = await fetch(`/api/share/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Check out my todo!',
+                        url: data.share_url
+                    });
+                } else {
+                    navigator.clipboard.writeText(data.share_url);
+                    alert('Share link copied to clipboard!');
+                }
+            }
+        }
+
+        const app = new TodoApp();
+
+        // Add modal styles
+        const modalStyles = `
+            .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+            .modal-content { background: var(--glass); margin: 15% auto; padding: 2rem; width: 80%; max-width: 500px; border-radius: 16px; backdrop-filter: blur(20px); }
+        `;
+        const style = document.createElement('style');
+        style.textContent = modalStyles;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

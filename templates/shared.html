@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Todo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-share-alt"></i>
+                <h1>Shared Todo</h1>
+                <p>{{ share.shared_by }} shared this with you</p>
+            </div>
+            
+            <div class="shared-todo">
+                <div class="todo-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ share.todo_text }}</span>
+                </div>
+                <p class="shared-date">Shared on {{ share.created_at[:10] }}</p>
+            </div>
+            
+            <div class="auth-footer">
+                <a href="/register" class="auth-btn">Join Todo App</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "text": "work",
+    "completed": false,
+    "created_at": "2025-08-27T21:01:45.287825",
+    "priority": "low",
+    "user_id": "aryan_jaiswal.27",
+    "goal_id": null
+  },
+  {
+    "id": 2,
+    "text": "kam",
+    "completed": false,
+    "created_at": "2025-08-27T21:02:33.433713",
+    "priority": "high",
+    "user_id": "aryan_jaiswal.27",
+    "goal_id": "1"
+  }
+]
