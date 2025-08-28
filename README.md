@@ -74,7 +74,7 @@ A comprehensive, feature-rich todo list application with authentication, real-ti
 
 1. **Clone or download the project**
 ```bash
-cd "game web"
+cd "modern todo list"
 ```
 
 2. **Install dependencies**
