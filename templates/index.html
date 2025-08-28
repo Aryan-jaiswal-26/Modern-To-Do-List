@@ -93,13 +93,25 @@
     <script>
         class TodoApp {
             constructor() {
-                this.todos = [];
-                this.goals = [];
-                this.workspaces = [];
+                this.todos = this.loadFromStorage('todos') || [];
+                this.goals = this.loadFromStorage('goals') || [];
+                this.workspaces = this.loadFromStorage('workspaces') || [];
                 this.currentWorkspace = null;
                 this.filter = 'all';
                 this.socket = io();
                 this.init();
+            }
+
+            loadFromStorage(key) {
+                try {
+                    return JSON.parse(localStorage.getItem(key));
+                } catch {
+                    return null;
+                }
+            }
+
+            saveToStorage(key, data) {
+                localStorage.setItem(key, JSON.stringify(data));
             }
 
             init() {
@@ -159,8 +171,7 @@
             }
 
             async loadTodos() {
-                const response = await fetch('/api/todos');
-                this.todos = await response.json();
+                this.todos = this.loadFromStorage('todos') || [];
                 this.render();
             }
 
@@ -199,20 +210,18 @@
             async toggleTodo(id) {
                 const todo = this.todos.find(t => t.id === id);
                 todo.completed = !todo.completed;
-
-                await fetch(`/api/todos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ completed: todo.completed })
-                });
-
+                if (todo.completed) {
+                    todo.completed_at = new Date().toISOString();
+                }
+                
+                this.saveToStorage('todos', this.todos);
                 this.render();
                 this.loadStreak();
             }
 
             async deleteTodo(id) {
-                await fetch(`/api/todos/${id}`, { method: 'DELETE' });
                 this.todos = this.todos.filter(t => t.id !== id);
+                this.saveToStorage('todos', this.todos);
                 this.render();
             }
 
@@ -266,16 +275,39 @@
             }
 
             async loadGoals() {
-                const response = await fetch('/api/goals');
-                this.goals = await response.json();
+                this.goals = this.loadFromStorage('goals') || [];
                 this.renderGoals();
                 this.updateGoalSelect();
             }
 
             async loadStreak() {
-                const response = await fetch('/api/streak');
-                const data = await response.json();
-                document.getElementById('streak-count').textContent = data.streak;
+                const completedTodos = this.todos.filter(t => t.completed);
+                const dates = [...new Set(completedTodos.map(t => t.completed_at?.split('T')[0]).filter(Boolean))];
+                const streak = this.calculateStreak(dates);
+                document.getElementById('streak-count').textContent = streak;
+            }
+
+            calculateStreak(dates) {
+                if (!dates.length) return 0;
+                
+                const sortedDates = dates.sort((a, b) => new Date(b) - new Date(a));
+                let streak = 0;
+                const today = new Date().toISOString().split('T')[0];
+                let currentDate = new Date(today);
+                
+                for (const dateStr of sortedDates) {
+                    const date = new Date(dateStr);
+                    const diffDays = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === streak) {
+                        streak++;
+                        currentDate = date;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
             }
 
             renderGoals() {
@@ -313,23 +345,27 @@
             }
 
             async addGoal(title, target) {
-                const response = await fetch('/api/goals', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, target })
-                });
-                const newGoal = await response.json();
+                const newGoal = {
+                    id: Date.now(),
+                    title: title,
+                    target: target,
+                    current: 0,
+                    created_at: new Date().toISOString()
+                };
+                
                 this.goals.push(newGoal);
+                this.saveToStorage('goals', this.goals);
                 this.renderGoals();
                 this.updateGoalSelect();
             }
 
-            async updateGoalProgress(goalId) {
-                await fetch(`/api/goals/${goalId}/progress`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                this.loadGoals();
+            updateGoalProgress(goalId) {
+                const goal = this.goals.find(g => g.id === goalId);
+                if (goal) {
+                    goal.current = Math.min(goal.current + 1, goal.target);
+                    this.saveToStorage('goals', this.goals);
+                    this.renderGoals();
+                }
             }
 
             async shareTodo(id) {
@@ -367,11 +403,7 @@
                 const icon = document.querySelector('#theme-toggle i');
                 icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 
-                await fetch('/api/theme', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ theme: newTheme })
-                });
+                // Theme saved to localStorage automatically
             }
 
             async loadNotifications() {
@@ -393,19 +425,20 @@
             }
 
             async createWorkspace(name) {
-                const response = await fetch('/api/workspaces', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description: '' })
-                });
-                const workspace = await response.json();
+                const workspace = {
+                    id: Date.now(),
+                    name: name,
+                    description: '',
+                    created_at: new Date().toISOString()
+                };
+                
                 this.workspaces.push(workspace);
+                this.saveToStorage('workspaces', this.workspaces);
                 this.updateWorkspaceSelect();
             }
 
             async loadWorkspaces() {
-                const response = await fetch('/api/workspaces');
-                this.workspaces = await response.json();
+                this.workspaces = this.loadFromStorage('workspaces') || [];
                 this.updateWorkspaceSelect();
             }
 
@@ -511,28 +544,27 @@
                 
                 if (!input.value.trim()) return;
 
-                const response = await fetch('/api/todos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        text: input.value, 
-                        priority,
-                        goal_id: goalId || null,
-                        due_date: dueDate || null,
-                        workspace_id: this.currentWorkspace
-                    })
-                });
+                const newTodo = {
+                    id: Date.now(),
+                    text: input.value,
+                    completed: false,
+                    created_at: new Date().toISOString(),
+                    priority: priority,
+                    goal_id: goalId || null,
+                    due_date: dueDate || null,
+                    workspace_id: this.currentWorkspace
+                };
 
-                const newTodo = await response.json();
                 this.todos.push(newTodo);
+                this.saveToStorage('todos', this.todos);
+                
                 input.value = '';
                 document.getElementById('due-date').value = '';
                 
                 if (goalId) {
-                    await this.updateGoalProgress(parseInt(goalId));
+                    this.updateGoalProgress(parseInt(goalId));
                 }
                 
-                // Emit real-time update
                 if (this.currentWorkspace) {
                     this.socket.emit('todo_update', {
                         workspace_id: this.currentWorkspace,

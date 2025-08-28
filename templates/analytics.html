@@ -74,16 +74,53 @@
             }
 
             async loadAnalytics() {
-                const response = await fetch('/api/analytics');
-                const data = await response.json();
+                const todos = JSON.parse(localStorage.getItem('todos')) || [];
+                const goals = JSON.parse(localStorage.getItem('goals')) || [];
                 
-                document.getElementById('total-todos').textContent = data.total_todos;
-                document.getElementById('completed-todos').textContent = data.completed_todos;
-                document.getElementById('completion-rate').textContent = data.completion_rate + '%';
-                document.getElementById('current-streak').textContent = data.streak;
+                const completedTodos = todos.filter(t => t.completed);
+                const completionRate = todos.length ? Math.round((completedTodos.length / todos.length) * 100) : 0;
+                
+                const priorityBreakdown = {
+                    high: todos.filter(t => t.priority === 'high').length,
+                    medium: todos.filter(t => t.priority === 'medium').length,
+                    low: todos.filter(t => t.priority === 'low').length
+                };
+                
+                const completedGoals = goals.filter(g => g.current >= g.target).length;
+                
+                document.getElementById('total-todos').textContent = todos.length;
+                document.getElementById('completed-todos').textContent = completedTodos.length;
+                document.getElementById('completion-rate').textContent = completionRate + '%';
+                document.getElementById('current-streak').textContent = this.calculateStreak(todos);
 
-                this.createPriorityChart(data.priority_breakdown);
-                this.createGoalsChart(data);
+                this.createPriorityChart(priorityBreakdown);
+                this.createGoalsChart({ total_goals: goals.length, completed_goals: completedGoals });
+            }
+
+            calculateStreak(todos) {
+                const completedTodos = todos.filter(t => t.completed && t.completed_at);
+                const dates = [...new Set(completedTodos.map(t => t.completed_at.split('T')[0]))];
+                
+                if (!dates.length) return 0;
+                
+                const sortedDates = dates.sort((a, b) => new Date(b) - new Date(a));
+                let streak = 0;
+                const today = new Date().toISOString().split('T')[0];
+                let currentDate = new Date(today);
+                
+                for (const dateStr of sortedDates) {
+                    const date = new Date(dateStr);
+                    const diffDays = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === streak) {
+                        streak++;
+                        currentDate = date;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
             }
 
             createPriorityChart(priorities) {
