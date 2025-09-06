@@ -1,289 +1,310 @@
-# 🚀 Modern Todo List App
+# 🔥 Streakify - Advanced Goal & Task Tracker
 
-A comprehensive, feature-rich todo list application with authentication, real-time collaboration, advanced analytics, team workspaces, and modern UI/UX design.
+A comprehensive web application for managing tasks, building streaks, and collaborating with others on goals. Built with Flask, SQLite, and modern web technologies.
 
 ## ✨ Features
 
-### 🔐 **Authentication System**
-- User registration and login
-- Secure session management
-- Password hashing with Werkzeug
-- User-specific todo lists
+### 🎯 Core Functionality
+- **Tasks (One-time)**: Create, manage, and complete individual tasks with priorities and due dates
+- **Goals (Repeatable)**: Set target days for habits and track daily streaks
+- **Workbench (Collaborative)**: Create shared spaces where teams can work on goals together
+- **Analytics**: Comprehensive dashboard with streak tracking and progress visualization
 
-### 🔥 **Streak Tracking**
-- Daily completion streak counter
-- Automatic streak calculation
-- Visual fire icon indicator
-- Motivational progress tracking
+### 🔥 Streak System
+- Daily streak tracking for goals
+- Best streak records
+- Email notifications for missed streaks
+- Visual streak indicators with fire animations
 
-### 🎯 **Goals System**
-- Create custom goals with targets
-- Visual progress bars
-- Link todos to specific goals
-- Auto-increment goal progress
+### 👥 Collaboration Features
+- Create workbenches with invite codes
+- Real-time collaboration using WebSockets
+- Share goals with team members
+- Live activity updates
 
-### 📤 **Share Feature**
-- Share individual todos via unique URLs
-- Native device sharing support
-- Clipboard fallback for link copying
-- Public view for shared todos
+### 📧 Smart Notifications
+- Daily email reminders for missed streaks
+- Customizable notification times
+- Beautiful HTML email templates
+- Automatic streak monitoring
 
-### 🎨 **Modern UI/UX**
-- Glassmorphism design with backdrop blur
+### 🎨 Modern UI/UX
+- Glassmorphism design with beautiful gradients
+- Responsive design for all devices
+- Dark/Light theme support
 - Smooth animations and transitions
-- Responsive mobile-first design
-- Priority-based color coding
-- Interactive hover effects
-- Dark/light theme toggle
-- Advanced CSS animations
+- Intuitive navigation
 
-### 🔄 **Real-time Collaboration**
-- Live WebSocket connections
-- Instant todo updates across users
-- Typing indicators
-- User presence notifications
-- Workspace-based collaboration
+## 🚀 Quick Start
 
-### 📊 **Advanced Analytics Dashboard**
-- Interactive charts and graphs
-- Completion rate tracking
-- Priority distribution analysis
-- Goal progress visualization
-- Performance metrics
+### Prerequisites
+- Python 3.7+
+- pip (Python package manager)
 
-### 👥 **Team Workspaces**
-- Create and manage team workspaces
-- Collaborative todo management
-- Real-time team updates
-- Member management
-- Workspace switching
+### Installation
 
-### 📅 **Calendar Integration**
-- Due date assignment
-- Calendar view for todos
-- Deadline tracking
-- Date-based organization
-
-### 🔔 **Notification System**
-- Real-time notifications
-- User activity alerts
-- System notifications
-- Notification badges
-
-## 🛠️ Installation
-
-1. **Clone or download the project**
-```bash
-cd "modern todo list"
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd streakify/Modern-To-Do-List
+   ```
 
 2. **Install dependencies**
-```bash
-pip install -r requirements.txt
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Setup Supabase Database**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Go to SQL Editor and run the queries from `supabase_setup.sql`
+   - **IMPORTANT**: Run this additional SQL to fix RLS policies:
+   ```sql
+   -- Disable RLS for users table to allow registration
+   ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE tasks DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE workbenches DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE workbench_members DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE workbench_goals DISABLE ROW LEVEL SECURITY;
+   ALTER TABLE goal_progress DISABLE ROW LEVEL SECURITY;
+   ```
+   - Get your project URL and anon key from Settings > API
+
+4. **Configure environment variables**
+   
+   Update `.env` file with your credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   MAIL_USERNAME=your-email@gmail.com
+   MAIL_PASSWORD=your-16-digit-app-password
+   SECRET_KEY=any-random-string
+   ```
+
+5. **Run the application**
+   ```bash
+   python app.py
+   ```
+
+6. **Open your browser**
+   
+   Navigate to `http://localhost:5000`
+
+## 📱 How to Use
+
+### Getting Started
+1. **Register/Login**: Create an account or sign in
+2. **Create Tasks**: Add one-time tasks with priorities and due dates
+3. **Set Goals**: Create repeatable goals with target days (e.g., "Exercise for 30 days")
+4. **Build Streaks**: Complete goals daily to build and maintain streaks
+5. **Collaborate**: Create workbenches and invite others to work on shared goals
+
+### Task Management
+- **Add Task**: Click "Add Task" button, fill in details
+- **Set Priority**: Choose High, Medium, or Low priority
+- **Due Dates**: Optional due dates for better organization
+- **Complete**: Check off tasks when done
+
+### Goal Tracking
+- **Create Goal**: Set a title, description, and target days
+- **Daily Completion**: Mark goals as complete each day
+- **Streak Building**: Consecutive completions build your streak
+- **Progress Tracking**: Visual progress bars show your advancement
+
+### Workbench Collaboration
+- **Create Workbench**: Set up a collaborative space
+- **Invite Others**: Share the invite code with team members
+- **Shared Goals**: Add your goals to the workbench for team visibility
+- **Real-time Updates**: See live updates when team members complete goals
+
+### Analytics Dashboard
+- View completed tasks count
+- Track current and best streaks
+- Monitor active goals
+- Comprehensive progress overview
+
+## ⚙️ Configuration
+
+### Email Notifications
+To enable email notifications for streak reminders:
+
+1. **Gmail Setup** (Recommended):
+   - Enable 2-Factor Authentication
+   - Generate an App Password
+   - Use the App Password in `config.py`
+
+2. **Other Email Providers**:
+   - Update SMTP settings in `config.py`
+   - Adjust port and security settings as needed
+
+### Notification Timing
+Modify `NOTIFICATION_CONFIG` in `config.py`:
+```python
+NOTIFICATION_CONFIG = {
+    'STREAK_REMINDER_TIME': '09:00',  # 9 AM daily
+    'ENABLE_EMAIL_NOTIFICATIONS': True,
+}
 ```
 
-3. **Run the application**
-```bash
-python todolist.py
+## 🛠️ Technical Details
+
+### Architecture
+- **Backend**: Flask with SQLite database
+- **Frontend**: Vanilla JavaScript with modern ES6+
+- **Real-time**: Socket.IO for live collaboration
+- **Styling**: Custom CSS with glassmorphism design
+- **Email**: Flask-Mail with HTML templates
+- **Scheduling**: APScheduler for automated tasks
+
+### Database Schema
+- **Users**: Authentication and profile data
+- **Tasks**: One-time tasks with metadata
+- **Goals**: Repeatable goals with streak tracking
+- **Workbenches**: Collaborative spaces
+- **Goal Progress**: Daily completion records
+
+### Security Features
+- Password hashing with Werkzeug
+- Session management
+- CSRF protection
+- Input validation and sanitization
+
+## 🎨 Customization
+
+### Themes
+The app supports custom themes. Modify CSS variables in `style.css`:
+```css
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #f093fb;
+    /* Add your custom colors */
+}
 ```
 
-4. **Open in browser**
-```
-http://localhost:5000
-```
+### Email Templates
+Customize email notifications by editing `templates/email/streak_reminder.html`
 
-## 📁 Project Structure
+## 📊 Features in Detail
 
+### Streak System
+- **Daily Tracking**: Goals are tracked daily
+- **Streak Calculation**: Consecutive days of completion
+- **Best Streak**: Historical best performance
+- **Visual Indicators**: Fire icons and progress bars
+- **Email Reminders**: Automatic notifications for missed days
+
+### Collaboration
+- **Workbench Creation**: Team spaces with unique invite codes
+- **Real-time Updates**: Live notifications when team members complete goals
+- **Shared Progress**: Team visibility into individual goal progress
+- **Member Management**: Track workbench membership
+
+### Analytics
+- **Task Completion**: Total completed tasks
+- **Streak Metrics**: Current and best streaks
+- **Goal Overview**: Active goals count
+- **Progress Visualization**: Charts and progress indicators
+
+## 🔧 Development
+
+### Project Structure
 ```
-game web/
-├── todolist.py          # Main Flask application with WebSocket support
-├── requirements.txt     # Python dependencies
-├── templates/
-│   ├── index.html      # Main todo interface with real-time features
-│   ├── login.html      # Login page
-│   ├── register.html   # Registration page
-│   ├── analytics.html  # Analytics dashboard
-│   └── shared.html     # Shared todo view
+Modern-To-Do-List/
+├── app.py                 # Main Flask application
+├── config.py             # Configuration settings
+├── requirements.txt      # Python dependencies
+├── streakify.db         # SQLite database (auto-created)
 ├── static/
-│   ├── style.css       # Main app styles with dark theme
+│   ├── style.css        # Main stylesheet
+│   ├── app.js          # Frontend JavaScript
 │   └── auth.css        # Authentication styles
-├── todos.json          # Todo data storage
-├── users.json          # User data storage
-├── goals.json          # Goals data storage
-├── shares.json         # Shared todos data
-├── workspaces.json     # Team workspaces data
-└── notifications.json  # Notifications data
+└── templates/
+    ├── index.html       # Main application
+    ├── login.html       # Login page
+    ├── register.html    # Registration page
+    └── email/
+        └── streak_reminder.html  # Email template
 ```
 
-## 🎮 Usage
+### Adding Features
+1. **Database Changes**: Update schema in `init_db()` function
+2. **API Endpoints**: Add routes in `app.py`
+3. **Frontend**: Update JavaScript in `app.js`
+4. **Styling**: Modify CSS in `style.css`
 
-### **Getting Started**
-1. Register a new account or login
-2. Start adding todos with priorities
-3. Create goals to track progress
-4. Build your daily streak!
+## 🚀 Deployment
 
-### **Adding Todos**
-- Enter task description
-- Select priority (Low/Medium/High)
-- Set due dates with calendar picker
-- Optionally link to a goal
-- Choose workspace (personal or team)
-- Click the + button to add
-
-### **Managing Goals**
-- Click "Add Goal" button
-- Set goal title and target number
-- Watch progress bars fill as you complete linked todos
-
-### **Sharing Todos**
-- Click the share icon on any todo
-- Share via native device sharing or copy link
-- Recipients can view without account
-
-### **Building Streaks**
-- Complete at least one todo daily
-- Watch your streak counter grow
-- Maintain consistency for motivation
-
-### **Team Collaboration**
-- Create or join team workspaces
-- See real-time updates from team members
-- Get notifications when users join/leave
-- View typing indicators
-- Switch between personal and team workspaces
-
-### **Analytics & Insights**
-- Visit analytics dashboard
-- View completion rates and statistics
-- Analyze priority distribution
-- Track goal progress with charts
-- Monitor productivity trends
-
-### **Theme & Customization**
-- Toggle between light and dark themes
-- Personalized user experience
-- Persistent theme preferences
-- Modern glassmorphism design
-
-## 🎨 Design Features
-
-- **Glassmorphism Effects**: Translucent cards with backdrop blur
-- **Gradient Backgrounds**: Multi-layered radial gradients
-- **Micro-interactions**: Smooth hover and focus animations
-- **Color Psychology**: Priority-based visual indicators
-- **Typography**: Clean Inter font family
-- **Responsive Layout**: Works on all device sizes
-
-## 🔧 Technical Details
-
-### **Backend (Flask + SocketIO)**
-- RESTful API endpoints
-- WebSocket real-time communication
-- JSON file-based storage
-- Session-based authentication
-- Password hashing security
-- Real-time collaboration support
-
-### **Frontend (Vanilla JS + SocketIO)**
-- Modern ES6+ JavaScript
-- Socket.IO for real-time features
-- Fetch API for HTTP requests
-- Dynamic DOM manipulation
-- CSS3 animations and effects
-- Chart.js for analytics visualization
-
-### **Data Storage**
-- JSON files for simplicity
-- User-specific data isolation
-- Automatic file creation
-- Persistent data storage
-
-## 🚀 API Endpoints
-
-```
-GET  /                    # Main todo interface
-GET  /login              # Login page
-POST /login              # Authenticate user
-GET  /register           # Registration page
-POST /register           # Create new user
-GET  /logout             # Logout user
-
-GET  /api/todos          # Get user todos
-POST /api/todos          # Create new todo
-PUT  /api/todos/:id      # Update todo
-DELETE /api/todos/:id    # Delete todo
-
-GET  /api/goals          # Get user goals
-POST /api/goals          # Create new goal
-PUT  /api/goals/:id/progress # Update goal progress
-
-GET  /api/streak         # Get user streak
-POST /api/share/:id      # Share todo
-GET  /shared/:id         # View shared todo
-
-GET  /analytics          # Analytics dashboard
-GET  /api/analytics      # Get analytics data
-GET  /api/workspaces     # Get user workspaces
-POST /api/workspaces     # Create workspace
-GET  /api/notifications  # Get notifications
-POST /api/theme          # Set theme preference
-
-# WebSocket Events
-join_workspace           # Join collaborative workspace
-leave_workspace          # Leave workspace
-todo_update             # Real-time todo updates
-typing                  # Typing indicators
+### Local Development
+```bash
+python app.py
 ```
 
-## ✅ Implemented Features
+### Production Deployment
+1. **Set Environment Variables**:
+   ```bash
+   export FLASK_ENV=production
+   export SECRET_KEY=your-production-secret-key
+   ```
 
-- [x] **Real-time collaboration** - WebSocket-based live updates
-- [x] **Advanced analytics dashboard** - Charts and statistics
-- [x] **Team workspaces** - Collaborative todo management
-- [x] **Calendar integration** - Due dates and scheduling
-- [x] **Notification system** - Real-time alerts
-- [x] **Dark/light theme toggle** - Complete theme system
+2. **Use Production WSGI Server**:
+   ```bash
+   pip install gunicorn
+   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   ```
 
-## 🎯 Future Enhancements
-
-- [ ] Database integration (SQLite/PostgreSQL)
-- [ ] Mobile app (React Native)
-- [ ] Email notifications
-- [ ] File attachments
-- [ ] Advanced user roles
-- [ ] API rate limiting
-- [ ] Offline support
-- [ ] Export/import functionality
-
-## 📱 Browser Support
-
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
+3. **Database**: Consider PostgreSQL for production
+4. **Email**: Configure production SMTP settings
+5. **Security**: Enable HTTPS and secure headers
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch
+2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
-5. Submit pull request
+4. Add tests if applicable
+5. Submit a pull request
 
-## 📄 License
+## 📝 License
 
-MIT License - feel free to use for personal or commercial projects.
+This project is open source and available under the MIT License.
+
+## 🆘 Support & Troubleshooting
+
+### Common Issues:
+
+**Registration fails with RLS error:**
+```sql
+-- Run this in Supabase SQL Editor
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+```
+
+**Supabase connection issues:**
+- Verify URL and anon key in `.env`
+- Check if tables exist in Supabase dashboard
+- Ensure you ran `supabase_setup.sql`
+
+**Email notifications not working:**
+- Use Gmail App Password (16 digits)
+- Enable 2-Factor Authentication first
+- Check spam folder
+
+**General troubleshooting:**
+1. Check console output for error messages
+2. Verify all dependencies are installed
+3. Ensure Supabase project is active
+4. Check browser console for JavaScript errors
+
+## 🎯 Roadmap
+
+- [ ] Mobile app development
+- [ ] Advanced analytics and reporting
+- [ ] Integration with fitness trackers
+- [ ] Social features and leaderboards
+- [ ] API for third-party integrations
+- [ ] Advanced notification options
+- [ ] Goal templates and suggestions
 
 ---
 
-**Built with ❤️ using Flask, SocketIO, HTML5, CSS3, JavaScript, and Chart.js**
-
-## 🌟 Key Technologies
-
-- **Backend**: Flask, Flask-SocketIO, Werkzeug
-- **Frontend**: Vanilla JavaScript, Socket.IO Client, Chart.js
-- **Styling**: CSS3, Glassmorphism, CSS Grid/Flexbox
-- **Real-time**: WebSocket connections
-- **Data**: JSON file storage
-- **Security**: Password hashing, session management
+**Built with ❤️ for productivity enthusiasts and teams who want to build lasting habits together!**

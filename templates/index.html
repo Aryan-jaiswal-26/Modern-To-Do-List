@@ -3,591 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Todo List</title>
+    <title>Streakify - Goal & Task Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="todo-app">
-            <header class="header">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-fire"></i>
+                    <h1>Streakify</h1>
+                </div>
                 <div class="user-info">
-                    <span class="welcome">Welcome, {{ username }}!</span>
-                    <div class="user-actions">
-                        <button class="theme-toggle" id="theme-toggle">
-                            <i class="fas fa-moon"></i>
+                    <span class="welcome-text">Welcome, {{ username }}!</span>
+                    <div class="user-menu">
+                        <button class="user-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
                         </button>
-                        <a href="/analytics" class="analytics-btn">
-                            <i class="fas fa-chart-bar"></i>
-                        </a>
-                        <button class="workspace-btn" id="workspace-btn">
-                            <i class="fas fa-users"></i>
-                        </button>
-                        <button class="notification-btn" id="notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-count" id="notification-count">0</span>
-                        </button>
-                        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
-                    </div>
-                </div>
-                <h1><i class="fas fa-tasks"></i> Todo List</h1>
-                <div class="stats">
-                    <div class="stat-item">
-                        <i class="fas fa-fire"></i>
-                        <span id="streak-count">0</span> day streak
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="total-count">0</span> tasks
-                    </div>
-                </div>
-            </header>
-
-            <form class="add-form" id="add-form">
-                <div class="input-group">
-                    <input type="text" id="todo-input" placeholder="Add a new task..." required>
-                    <select id="priority-select">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                    <select id="goal-select">
-                        <option value="">No Goal</option>
-                    </select>
-                    <input type="date" id="due-date" class="due-date-input">
-                    <button type="submit"><i class="fas fa-plus"></i></button>
-                </div>
-            </form>
-
-            <div class="workspace-section">
-                <h3><i class="fas fa-users"></i> Workspace</h3>
-                <select id="workspace-select" class="workspace-select">
-                    <option value="">Personal Workspace</option>
-                </select>
-                <div class="online-users" id="online-users"></div>
-            </div>
-
-            <div class="goals-section">
-                <h3><i class="fas fa-bullseye"></i> Goals</h3>
-                <div class="goals-container" id="goals-container"></div>
-                <button class="add-goal-btn" id="add-goal-btn">
-                    <i class="fas fa-plus"></i> Add Goal
-                </button>
-            </div>
-
-            <div class="filters">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="active">Active</button>
-                <button class="filter-btn" data-filter="completed">Completed</button>
-            </div>
-
-            <ul class="todo-list" id="todo-list"></ul>
-
-            <div class="footer">
-                <button id="clear-completed" class="clear-btn">Clear Completed</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        class TodoApp {
-            constructor() {
-                this.todos = this.loadFromStorage('todos') || [];
-                this.goals = this.loadFromStorage('goals') || [];
-                this.workspaces = this.loadFromStorage('workspaces') || [];
-                this.currentWorkspace = null;
-                this.filter = 'all';
-                this.socket = io();
-                this.init();
-            }
-
-            loadFromStorage(key) {
-                try {
-                    return JSON.parse(localStorage.getItem(key));
-                } catch {
-                    return null;
-                }
-            }
-
-            saveToStorage(key, data) {
-                localStorage.setItem(key, JSON.stringify(data));
-            }
-
-            init() {
-                this.bindEvents();
-                this.setupSocketEvents();
-                this.loadTodos();
-                this.loadGoals();
-                this.loadWorkspaces();
-                this.loadStreak();
-                this.loadTheme();
-                this.loadNotifications();
-            }
-
-            bindEvents() {
-                document.getElementById('add-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.addTodo();
-                });
-
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        this.setFilter(e.target.dataset.filter);
-                    });
-                });
-
-                document.getElementById('clear-completed').addEventListener('click', () => {
-                    this.clearCompleted();
-                });
-
-                document.getElementById('add-goal-btn').addEventListener('click', () => {
-                    this.showAddGoalModal();
-                });
-
-                document.getElementById('theme-toggle').addEventListener('click', () => {
-                    this.toggleTheme();
-                });
-
-                document.getElementById('workspace-btn').addEventListener('click', () => {
-                    this.showWorkspaceModal();
-                });
-
-                document.getElementById('notification-btn').addEventListener('click', () => {
-                    this.showNotifications();
-                });
-
-                document.getElementById('workspace-select').addEventListener('change', (e) => {
-                    this.switchWorkspace(e.target.value);
-                });
-
-                document.getElementById('todo-input').addEventListener('input', () => {
-                    this.handleTyping(true);
-                });
-
-                document.getElementById('todo-input').addEventListener('blur', () => {
-                    this.handleTyping(false);
-                });
-            }
-
-            async loadTodos() {
-                this.todos = this.loadFromStorage('todos') || [];
-                this.render();
-            }
-
-            async addTodo() {
-                const input = document.getElementById('todo-input');
-                const priority = document.getElementById('priority-select').value;
-                const goalId = document.getElementById('goal-select').value;
-                const dueDate = document.getElementById('due-date').value;
-                
-                if (!input.value.trim()) return;
-
-                const response = await fetch('/api/todos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        text: input.value, 
-                        priority,
-                        goal_id: goalId || null,
-                        due_date: dueDate || null
-                    })
-                });
-
-                const newTodo = await response.json();
-                this.todos.push(newTodo);
-                input.value = '';
-                document.getElementById('due-date').value = '';
-                
-                if (goalId) {
-                    await this.updateGoalProgress(parseInt(goalId));
-                }
-                
-                this.render();
-                this.loadStreak();
-            }
-
-            async toggleTodo(id) {
-                const todo = this.todos.find(t => t.id === id);
-                todo.completed = !todo.completed;
-                if (todo.completed) {
-                    todo.completed_at = new Date().toISOString();
-                }
-                
-                this.saveToStorage('todos', this.todos);
-                this.render();
-                this.loadStreak();
-            }
-
-            async deleteTodo(id) {
-                this.todos = this.todos.filter(t => t.id !== id);
-                this.saveToStorage('todos', this.todos);
-                this.render();
-            }
-
-            setFilter(filter) {
-                this.filter = filter;
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.filter === filter);
-                });
-                this.render();
-            }
-
-            async clearCompleted() {
-                const completed = this.todos.filter(t => t.completed);
-                for (const todo of completed) {
-                    await this.deleteTodo(todo.id);
-                }
-            }
-
-            getFilteredTodos() {
-                switch (this.filter) {
-                    case 'active': return this.todos.filter(t => !t.completed);
-                    case 'completed': return this.todos.filter(t => t.completed);
-                    default: return this.todos;
-                }
-            }
-
-            render() {
-                const list = document.getElementById('todo-list');
-                const filteredTodos = this.getFilteredTodos();
-
-                list.innerHTML = filteredTodos.map(todo => `
-                    <li class="todo-item ${todo.completed ? 'completed' : ''} priority-${todo.priority}" data-id="${todo.id}">
-                        <div class="todo-content">
-                            <input type="checkbox" ${todo.completed ? 'checked' : ''} 
-                                   onchange="app.toggleTodo(${todo.id})">
-                            <span class="todo-text">${todo.text}</span>
-                            <span class="priority-badge">${todo.priority}</span>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" onclick="toggleTheme()"><i class="fas fa-palette"></i> Theme</a>
+                            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
                         </div>
-                        <div class="todo-actions">
-                            <button class="share-btn" onclick="app.shareTodo(${todo.id})">
-                                <i class="fas fa-share"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="sidebar">
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active" data-section="tasks">
+                        <i class="fas fa-tasks"></i>
+                        <span>Tasks</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="goals">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Goals</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="workbench">
+                        <i class="fas fa-users"></i>
+                        <span>Workbench</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="analytics">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </nav>
+
+                <div class="streak-widget">
+                    <div class="streak-content">
+                        <div class="streak-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="streak-info">
+                            <div class="streak-number" id="streakCount">0</div>
+                            <div class="streak-label">Day Streak</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Tasks Section -->
+                <section id="tasks-section" class="content-section active">
+                    <div class="section-header">
+                        <h2><i class="fas fa-tasks"></i> Tasks (One-time)</h2>
+                        <button class="add-btn" onclick="showAddTaskModal()">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                    </div>
+
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="pending">Pending</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                        <button class="filter-btn" data-filter="high">High Priority</button>
+                    </div>
+
+                    <div class="tasks-container">
+                        <div id="tasksList" class="tasks-list"></div>
+                    </div>
+                </section>
+
+                <!-- Goals Section -->
+                <section id="goals-section" class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bullseye"></i> Goals (Repeatable)</h2>
+                        <button class="add-btn" onclick="showAddGoalModal()">
+                            <i class="fas fa-plus"></i> Add Goal
+                        </button>
+                    </div>
+
+                    <div class="goals-grid" id="goalsList"></div>
+                </section>
+
+                <!-- Workbench Section -->
+                <section id="workbench-section" class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Workbench (Collaborative)</h2>
+                        <div class="workspace-actions">
+                            <button class="add-btn" onclick="showCreateWorkbenchModal()">
+                                <i class="fas fa-plus"></i> Create Workbench
                             </button>
-                            <button class="delete-btn" onclick="app.deleteTodo(${todo.id})">
-                                <i class="fas fa-trash"></i>
+                            <button class="add-btn secondary" onclick="showJoinWorkbenchModal()">
+                                <i class="fas fa-sign-in-alt"></i> Join Workbench
                             </button>
                         </div>
-                    </li>
-                `).join('');
+                    </div>
 
-                document.getElementById('total-count').textContent = this.todos.length;
-            }
+                    <div class="workbench-grid" id="workbenchList"></div>
+                </section>
 
-            async loadGoals() {
-                this.goals = this.loadFromStorage('goals') || [];
-                this.renderGoals();
-                this.updateGoalSelect();
-            }
+                <!-- Analytics Section -->
+                <section id="analytics-section" class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> Analytics</h2>
+                    </div>
 
-            async loadStreak() {
-                const completedTodos = this.todos.filter(t => t.completed);
-                const dates = [...new Set(completedTodos.map(t => t.completed_at?.split('T')[0]).filter(Boolean))];
-                const streak = this.calculateStreak(dates);
-                document.getElementById('streak-count').textContent = streak;
-            }
-
-            calculateStreak(dates) {
-                if (!dates.length) return 0;
-                
-                const sortedDates = dates.sort((a, b) => new Date(b) - new Date(a));
-                let streak = 0;
-                const today = new Date().toISOString().split('T')[0];
-                let currentDate = new Date(today);
-                
-                for (const dateStr of sortedDates) {
-                    const date = new Date(dateStr);
-                    const diffDays = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays === streak) {
-                        streak++;
-                        currentDate = date;
-                    } else {
-                        break;
-                    }
-                }
-                
-                return streak;
-            }
-
-            renderGoals() {
-                const container = document.getElementById('goals-container');
-                container.innerHTML = this.goals.map(goal => `
-                    <div class="goal-item">
-                        <div class="goal-info">
-                            <span class="goal-title">${goal.title}</span>
-                            <div class="goal-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${(goal.current / goal.target) * 100}%"></div>
-                                </div>
-                                <span class="progress-text">${goal.current}/${goal.target}</span>
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="completedTasks">0</div>
+                                <div class="stat-label">Tasks Completed</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="currentStreak">0</div>
+                                <div class="stat-label">Current Streak</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="bestStreak">0</div>
+                                <div class="stat-label">Best Streak</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-bullseye"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="activeGoals">0</div>
+                                <div class="stat-label">Active Goals</div>
                             </div>
                         </div>
                     </div>
-                `).join('');
-            }
+                </section>
+            </div>
+        </main>
+    </div>
 
-            updateGoalSelect() {
-                const select = document.getElementById('goal-select');
-                const currentOptions = select.innerHTML;
-                const goalOptions = this.goals.map(goal => 
-                    `<option value="${goal.id}">${goal.title}</option>`
-                ).join('');
-                select.innerHTML = '<option value="">No Goal</option>' + goalOptions;
-            }
+    <!-- Modals -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Task</h3>
+                <span class="close" onclick="closeModal('addTaskModal')">&times;</span>
+            </div>
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" id="taskDueDate">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addTaskModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            showAddGoalModal() {
-                const title = prompt('Goal title:');
-                const target = prompt('Target number:');
-                if (title && target) {
-                    this.addGoal(title, parseInt(target));
-                }
-            }
+    <div id="addGoalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Goal</h3>
+                <span class="close" onclick="closeModal('addGoalModal')">&times;</span>
+            </div>
+            <form id="addGoalForm">
+                <div class="form-group">
+                    <label>Goal Title</label>
+                    <input type="text" id="goalTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="goalDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Target Days</label>
+                    <input type="number" id="goalTargetDays" min="1" value="30" required>
+                    <small>How many days do you want to maintain this goal?</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addGoalModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            async addGoal(title, target) {
-                const newGoal = {
-                    id: Date.now(),
-                    title: title,
-                    target: target,
-                    current: 0,
-                    created_at: new Date().toISOString()
-                };
-                
-                this.goals.push(newGoal);
-                this.saveToStorage('goals', this.goals);
-                this.renderGoals();
-                this.updateGoalSelect();
-            }
+    <div id="createWorkbenchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Workbench</h3>
+                <span class="close" onclick="closeModal('createWorkbenchModal')">&times;</span>
+            </div>
+            <form id="createWorkbenchForm">
+                <div class="form-group">
+                    <label>Workbench Name</label>
+                    <input type="text" id="workbenchName" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="workbenchDescription" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('createWorkbenchModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Workbench</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            updateGoalProgress(goalId) {
-                const goal = this.goals.find(g => g.id === goalId);
-                if (goal) {
-                    goal.current = Math.min(goal.current + 1, goal.target);
-                    this.saveToStorage('goals', this.goals);
-                    this.renderGoals();
-                }
-            }
+    <div id="joinWorkbenchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Join Workbench</h3>
+                <span class="close" onclick="closeModal('joinWorkbenchModal')">&times;</span>
+            </div>
+            <form id="joinWorkbenchForm">
+                <div class="form-group">
+                    <label>Invite Code</label>
+                    <input type="text" id="inviteCode" placeholder="Enter invite code" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('joinWorkbenchModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Join Workbench</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            async shareTodo(id) {
-                const response = await fetch(`/api/share/${id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'Check out my todo!',
-                        url: data.share_url
-                    });
-                } else {
-                    navigator.clipboard.writeText(data.share_url);
-                    alert('Share link copied to clipboard!');
-                }
-            }
-
-            async loadTheme() {
-                const theme = localStorage.getItem('theme') || 'light';
-                document.body.classList.toggle('dark-theme', theme === 'dark');
-                const icon = document.querySelector('#theme-toggle i');
-                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-
-            async toggleTheme() {
-                const isDark = document.body.classList.contains('dark-theme');
-                const newTheme = isDark ? 'light' : 'dark';
-                
-                document.body.classList.toggle('dark-theme');
-                localStorage.setItem('theme', newTheme);
-                
-                const icon = document.querySelector('#theme-toggle i');
-                icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                
-                // Theme saved to localStorage automatically
-            }
-
-            async loadNotifications() {
-                const response = await fetch('/api/notifications');
-                const notifications = await response.json();
-                document.getElementById('notification-count').textContent = notifications.length;
-            }
-
-            showNotifications() {
-                alert('Notifications feature - check console for details');
-                console.log('Notifications panel would open here');
-            }
-
-            showWorkspaceModal() {
-                const name = prompt('Workspace name:');
-                if (name) {
-                    this.createWorkspace(name);
-                }
-            }
-
-            async createWorkspace(name) {
-                const workspace = {
-                    id: Date.now(),
-                    name: name,
-                    description: '',
-                    created_at: new Date().toISOString()
-                };
-                
-                this.workspaces.push(workspace);
-                this.saveToStorage('workspaces', this.workspaces);
-                this.updateWorkspaceSelect();
-            }
-
-            async loadWorkspaces() {
-                this.workspaces = this.loadFromStorage('workspaces') || [];
-                this.updateWorkspaceSelect();
-            }
-
-            updateWorkspaceSelect() {
-                const select = document.getElementById('workspace-select');
-                const workspaceOptions = this.workspaces.map(workspace => 
-                    `<option value="${workspace.id}">${workspace.name}</option>`
-                ).join('');
-                select.innerHTML = '<option value="">Personal Workspace</option>' + workspaceOptions;
-            }
-
-            switchWorkspace(workspaceId) {
-                if (this.currentWorkspace) {
-                    this.socket.emit('leave_workspace', { workspace_id: this.currentWorkspace });
-                }
-                
-                this.currentWorkspace = workspaceId || null;
-                
-                if (workspaceId) {
-                    this.socket.emit('join_workspace', { workspace_id: workspaceId });
-                }
-                
-                this.loadTodos();
-            }
-
-            setupSocketEvents() {
-                this.socket.on('user_joined', (data) => {
-                    this.showNotification(data.message, 'info');
-                    this.updateOnlineUsers();
-                });
-
-                this.socket.on('user_left', (data) => {
-                    this.showNotification(data.message, 'info');
-                    this.updateOnlineUsers();
-                });
-
-                this.socket.on('todo_updated', (data) => {
-                    this.showNotification(`${data.user} ${data.action} a todo`, 'success');
-                    this.loadTodos();
-                });
-
-                this.socket.on('user_typing', (data) => {
-                    this.showTypingIndicator(data.user, data.typing);
-                });
-            }
-
-            handleTyping(isTyping) {
-                if (this.currentWorkspace) {
-                    this.socket.emit('typing', {
-                        workspace_id: this.currentWorkspace,
-                        typing: isTyping
-                    });
-                }
-            }
-
-            showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.textContent = message;
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: rgba(0,0,0,0.8);
-                    color: white;
-                    padding: 1rem;
-                    border-radius: 8px;
-                    z-index: 1000;
-                    animation: slideIn 0.3s ease;
-                `;
-                document.body.appendChild(notification);
-                setTimeout(() => notification.remove(), 3000);
-            }
-
-            showTypingIndicator(user, isTyping) {
-                const indicator = document.getElementById('typing-indicator') || document.createElement('div');
-                indicator.id = 'typing-indicator';
-                indicator.style.cssText = `
-                    color: rgba(255,255,255,0.6);
-                    font-size: 0.8rem;
-                    margin-top: 0.5rem;
-                `;
-                
-                if (isTyping) {
-                    indicator.textContent = `${user} is typing...`;
-                    document.querySelector('.add-form').appendChild(indicator);
-                } else {
-                    indicator.remove();
-                }
-            }
-
-            updateOnlineUsers() {
-                // Placeholder for online users display
-                const container = document.getElementById('online-users');
-                container.innerHTML = '<span class="online-indicator">🟢 Collaborative mode active</span>';
-            }
-
-            async addTodo() {
-                const input = document.getElementById('todo-input');
-                const priority = document.getElementById('priority-select').value;
-                const goalId = document.getElementById('goal-select').value;
-                const dueDate = document.getElementById('due-date').value;
-                
-                if (!input.value.trim()) return;
-
-                const newTodo = {
-                    id: Date.now(),
-                    text: input.value,
-                    completed: false,
-                    created_at: new Date().toISOString(),
-                    priority: priority,
-                    goal_id: goalId || null,
-                    due_date: dueDate || null,
-                    workspace_id: this.currentWorkspace
-                };
-
-                this.todos.push(newTodo);
-                this.saveToStorage('todos', this.todos);
-                
-                input.value = '';
-                document.getElementById('due-date').value = '';
-                
-                if (goalId) {
-                    this.updateGoalProgress(parseInt(goalId));
-                }
-                
-                if (this.currentWorkspace) {
-                    this.socket.emit('todo_update', {
-                        workspace_id: this.currentWorkspace,
-                        todo: newTodo,
-                        action: 'added'
-                    });
-                }
-                
-                this.render();
-                this.loadStreak();
-            }
-        }
-
-        const app = new TodoApp();
-
-        // Add modal styles
-        const modalStyles = `
-            .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-            .modal-content { background: var(--glass); margin: 15% auto; padding: 2rem; width: 80%; max-width: 500px; border-radius: 16px; backdrop-filter: blur(20px); }
-        `;
-        const style = document.createElement('style');
-        style.textContent = modalStyles;
-        document.head.appendChild(style);
-    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
