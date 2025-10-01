@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-white text-slate-900 antialiased transition-colors duration-200;
+}
+
+.dark body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+:root {
+  --aurora-1: rgba(99, 102, 241, 0.35);
+  --aurora-2: rgba(14, 165, 233, 0.35);
+  --aurora-3: rgba(236, 72, 153, 0.35);
+  --grid-color: rgba(148, 163, 184, 0.08);
+}
+
+@layer base {
+  body {
+    background-image: radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.05), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.05), transparent 40%),
+      linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.95));
+    background-color: #ffffff;
+  }
+  
+  .dark body {
+    background-image: radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.1), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.1), transparent 40%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98));
+    background-color: #020617;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image: linear-gradient(90deg, var(--grid-color) 1px, transparent 1px), linear-gradient(180deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glass {
+    backdrop-filter: blur(24px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.6));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+  
+  .dark .glass {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #f472b6 0%, #60a5fa 50%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(236, 72, 153, 0.6));
+    z-index: -1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -16px, 0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
