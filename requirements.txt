@@ -1,0 +1,51 @@
+# Node.js Runtime Requirements
+Node.js >= 18.0.0
+npm >= 9.0.0
+
+# Core Dependencies
+next@14.1.0
+react@18.2.0
+react-dom@18.2.0
+typescript@5.3.3
+
+# Authentication & Security
+next-auth@^4.24.5
+bcryptjs@^2.4.3
+zod@^3.22.4
+
+# Database & API
+@supabase/supabase-js@^2.42.5
+axios@^1.6.0
+swr@^2.2.0
+
+# UI & Styling
+tailwindcss@^3.3.5
+@tailwindcss/forms@^0.5.7
+tailwind-merge@^2.2.1
+clsx@^2.0.0
+lucide-react@^0.300.0
+
+# UI Components & Interactions
+@radix-ui/react-slot@^1.0.2
+@headlessui/react@^1.7.18
+framer-motion@^10.16.4
+react-confetti@^6.1.0
+
+# State Management & Themes
+zustand@^4.3.9
+next-themes@^0.2.1
+
+# Development Dependencies
+@types/node@20.10.5
+@types/react@18.2.38
+@types/react-dom@18.2.17
+@types/bcryptjs@^2.4.2
+eslint@^8.56.0
+eslint-config-next@14.1.0
+autoprefixer@^10.4.16
+postcss@^8.4.31
+
+# System Requirements
+# - Supabase account for database
+# - Vercel account for deployment (optional)
+# - Git for version control

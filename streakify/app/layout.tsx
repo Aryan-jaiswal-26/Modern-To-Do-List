@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
 
 export const metadata: Metadata = {
-  title: "StreakForge",
+  title: "Streakify",
   description: "Collaborative To-Do and Goal Tracker"
 };
 

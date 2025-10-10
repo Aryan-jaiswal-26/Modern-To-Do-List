@@ -1,4 +1,4 @@
-# StreakForge
+# Streakify
 
 A modern habit tracking and productivity app built with Next.js, featuring goal management, task tracking, and team collaboration.
 
@@ -27,7 +27,7 @@ A modern habit tracking and productivity app built with Next.js, featuring goal 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd collab-tracker
+   cd streakify
    ```
 
 2. **Install dependencies**

@@ -1,310 +1,211 @@
-# 🔥 Streakify - Advanced Goal & Task Tracker
+# Streakify 🎯
 
-A comprehensive web application for managing tasks, building streaks, and collaborating with others on goals. Built with Flask, SQLite, and modern web technologies.
+> A modern collaborative productivity platform that transforms habit tracking and goal achievement through gamification and team collaboration.
+
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC)](https://tailwindcss.com/)
+
+## 🚀 What is Streakify?
+
+Streakify is a comprehensive productivity application that combines personal task management with collaborative goal tracking. It empowers individuals and teams to build consistent habits, track progress through visual streaks, and achieve objectives together in shared workspaces.
+
+### Key Concepts
+- **Personal Tasks**: Traditional to-do list management with due dates and notes
+- **Goals & Streaks**: Habit tracking with visual streak counters and completion history
+- **Collaborative Workspaces**: Team environments for shared goal achievement
+- **Gamification**: Progress visualization and celebration animations
 
 ## ✨ Features
 
-### 🎯 Core Functionality
-- **Tasks (One-time)**: Create, manage, and complete individual tasks with priorities and due dates
-- **Goals (Repeatable)**: Set target days for habits and track daily streaks
-- **Workbench (Collaborative)**: Create shared spaces where teams can work on goals together
-- **Analytics**: Comprehensive dashboard with streak tracking and progress visualization
+### 🎯 **Smart Goal Tracking**
+- Create daily, weekly, or custom schedule goals
+- Visual streak counters with completion history
+- Progress analytics and achievement celebrations
+- Flexible scheduling (specific days, intervals)
 
-### 🔥 Streak System
-- Daily streak tracking for goals
-- Best streak records
-- Email notifications for missed streaks
-- Visual streak indicators with fire animations
+### ✅ **Advanced Task Management**
+- Rich task creation with notes and due dates
+- Priority levels and completion tracking
+- Personal task organization
+- Quick task actions and bulk operations
 
-### 👥 Collaboration Features
-- Create workbenches with invite codes
-- Real-time collaboration using WebSockets
-- Share goals with team members
-- Live activity updates
+### 👥 **Team Collaboration**
+- Shared workspaces for team goal alignment
+- Role-based permissions (owner, member)
+- Invite system with secure codes
+- Collaborative goal setting and tracking
 
-### 📧 Smart Notifications
-- Daily email reminders for missed streaks
-- Customizable notification times
-- Beautiful HTML email templates
-- Automatic streak monitoring
-
-### 🎨 Modern UI/UX
-- Glassmorphism design with beautiful gradients
+### 🎨 **Modern User Experience**
 - Responsive design for all devices
-- Dark/Light theme support
-- Smooth animations and transitions
-- Intuitive navigation
+- Dark/light theme with system preference detection
+- Smooth animations and micro-interactions
+- Confetti celebrations for achievements
+- Clean, intuitive interface
 
-## 🚀 Quick Start
+### 🔐 **Security & Authentication**
+- Secure email/password authentication
+- JWT session management
+- Protected API routes
+- Data validation and sanitization
 
-### Prerequisites
-- Python 3.7+
-- pip (Python package manager)
+## 🏗️ Architecture
 
-### Installation
+### **Technology Stack**
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd streakify/Modern-To-Do-List
-   ```
+| Layer | Technology | Purpose |
+|-------|------------|----------|
+| **Frontend** | Next.js 14 + React 18 | Server-side rendering, App Router |
+| **Styling** | Tailwind CSS | Utility-first CSS framework |
+| **Database** | Supabase (PostgreSQL) | Managed database with real-time features |
+| **Authentication** | NextAuth.js | Secure session management |
+| **State Management** | Zustand + SWR | Global state + server state caching |
+| **Animations** | Framer Motion | Smooth UI transitions |
+| **UI Components** | Custom + Radix UI | Accessible component primitives |
+| **Validation** | Zod | Type-safe schema validation |
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### **System Architecture**
 
-3. **Setup Supabase Database**
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Go to SQL Editor and run the queries from `supabase_setup.sql`
-   - **IMPORTANT**: Run this additional SQL to fix RLS policies:
-   ```sql
-   -- Disable RLS for users table to allow registration
-   ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE tasks DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE workbenches DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE workbench_members DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE workbench_goals DISABLE ROW LEVEL SECURITY;
-   ALTER TABLE goal_progress DISABLE ROW LEVEL SECURITY;
-   ```
-   - Get your project URL and anon key from Settings > API
-
-4. **Configure environment variables**
-   
-   Update `.env` file with your credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-16-digit-app-password
-   SECRET_KEY=any-random-string
-   ```
-
-5. **Run the application**
-   ```bash
-   python app.py
-   ```
-
-6. **Open your browser**
-   
-   Navigate to `http://localhost:5000`
-
-## 📱 How to Use
-
-### Getting Started
-1. **Register/Login**: Create an account or sign in
-2. **Create Tasks**: Add one-time tasks with priorities and due dates
-3. **Set Goals**: Create repeatable goals with target days (e.g., "Exercise for 30 days")
-4. **Build Streaks**: Complete goals daily to build and maintain streaks
-5. **Collaborate**: Create workbenches and invite others to work on shared goals
-
-### Task Management
-- **Add Task**: Click "Add Task" button, fill in details
-- **Set Priority**: Choose High, Medium, or Low priority
-- **Due Dates**: Optional due dates for better organization
-- **Complete**: Check off tasks when done
-
-### Goal Tracking
-- **Create Goal**: Set a title, description, and target days
-- **Daily Completion**: Mark goals as complete each day
-- **Streak Building**: Consecutive completions build your streak
-- **Progress Tracking**: Visual progress bars show your advancement
-
-### Workbench Collaboration
-- **Create Workbench**: Set up a collaborative space
-- **Invite Others**: Share the invite code with team members
-- **Shared Goals**: Add your goals to the workbench for team visibility
-- **Real-time Updates**: See live updates when team members complete goals
-
-### Analytics Dashboard
-- View completed tasks count
-- Track current and best streaks
-- Monitor active goals
-- Comprehensive progress overview
-
-## ⚙️ Configuration
-
-### Email Notifications
-To enable email notifications for streak reminders:
-
-1. **Gmail Setup** (Recommended):
-   - Enable 2-Factor Authentication
-   - Generate an App Password
-   - Use the App Password in `config.py`
-
-2. **Other Email Providers**:
-   - Update SMTP settings in `config.py`
-   - Adjust port and security settings as needed
-
-### Notification Timing
-Modify `NOTIFICATION_CONFIG` in `config.py`:
-```python
-NOTIFICATION_CONFIG = {
-    'STREAK_REMINDER_TIME': '09:00',  # 9 AM daily
-    'ENABLE_EMAIL_NOTIFICATIONS': True,
-}
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client App    │───▶│   Next.js API   │───▶│   Supabase DB   │
+│  (React/TS)     │    │   Routes        │    │  (PostgreSQL)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Zustand Store  │    │  NextAuth.js    │    │  Row Level      │
+│  (Client State) │    │ (Authentication)│    │   Security      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 🛠️ Technical Details
+### **Database Schema**
 
-### Architecture
-- **Backend**: Flask with SQLite database
-- **Frontend**: Vanilla JavaScript with modern ES6+
-- **Real-time**: Socket.IO for live collaboration
-- **Styling**: Custom CSS with glassmorphism design
-- **Email**: Flask-Mail with HTML templates
-- **Scheduling**: APScheduler for automated tasks
-
-### Database Schema
-- **Users**: Authentication and profile data
-- **Tasks**: One-time tasks with metadata
-- **Goals**: Repeatable goals with streak tracking
-- **Workbenches**: Collaborative spaces
-- **Goal Progress**: Daily completion records
-
-### Security Features
-- Password hashing with Werkzeug
-- Session management
-- CSRF protection
-- Input validation and sanitization
-
-## 🎨 Customization
-
-### Themes
-The app supports custom themes. Modify CSS variables in `style.css`:
-```css
-:root {
-    --primary: #667eea;
-    --secondary: #764ba2;
-    --accent: #f093fb;
-    /* Add your custom colors */
-}
+```sql
+-- Core entities and relationships
+users (id, email, password, name)
+tasks (id, user_id, title, notes, completed, due_date)
+goals (id, title, description, schedule_type, schedule_days, user_id, workspace_id, owner_id)
+workspaces (id, name, owner_id)
+workspace_members (id, workspace_id, user_id, role)
+goal_completions (id, goal_id, user_id, date, notes)
+invite_codes (id, workspace_id, code, expires_at)
 ```
 
-### Email Templates
-Customize email notifications by editing `templates/email/streak_reminder.html`
+## 🔄 User Flow
 
-## 📊 Features in Detail
+### **New User Journey**
+1. **Registration** → Create account with email/password
+2. **Onboarding** → Dashboard tour and first task/goal creation
+3. **Personal Productivity** → Add tasks and set up daily habits
+4. **Team Collaboration** → Create or join workspaces
+5. **Goal Achievement** → Track progress and celebrate streaks
 
-### Streak System
-- **Daily Tracking**: Goals are tracked daily
-- **Streak Calculation**: Consecutive days of completion
-- **Best Streak**: Historical best performance
-- **Visual Indicators**: Fire icons and progress bars
-- **Email Reminders**: Automatic notifications for missed days
+### **Daily Usage Flow**
+1. **Check Dashboard** → View today's tasks and goal status
+2. **Complete Tasks** → Mark items as done, add new ones
+3. **Update Goals** → Log daily habit completions
+4. **Team Check-in** → Review workspace progress
+5. **Celebrate Wins** → Enjoy streak milestones and achievements
 
-### Collaboration
-- **Workbench Creation**: Team spaces with unique invite codes
-- **Real-time Updates**: Live notifications when team members complete goals
-- **Shared Progress**: Team visibility into individual goal progress
-- **Member Management**: Track workbench membership
+### **Workspace Collaboration Flow**
+1. **Create Workspace** → Set up team environment
+2. **Invite Members** → Share invite codes with team
+3. **Set Team Goals** → Define shared objectives
+4. **Track Progress** → Monitor individual and team completion
+5. **Achieve Together** → Celebrate collective success
 
-### Analytics
-- **Task Completion**: Total completed tasks
-- **Streak Metrics**: Current and best streaks
-- **Goal Overview**: Active goals count
-- **Progress Visualization**: Charts and progress indicators
+## 🚀 Future Enhancements
 
-## 🔧 Development
+### **Phase 1: Enhanced Analytics**
+- [ ] Detailed progress charts and statistics
+- [ ] Goal completion trends and insights
+- [ ] Personal productivity metrics
+- [ ] Team performance dashboards
 
-### Project Structure
+### **Phase 2: Advanced Features**
+- [ ] Goal templates and categories
+- [ ] Habit stacking and goal dependencies
+- [ ] Reminder notifications and scheduling
+- [ ] Mobile app (React Native)
+
+### **Phase 3: Social & Gamification**
+- [ ] Public goal sharing and social feeds
+- [ ] Achievement badges and rewards system
+- [ ] Leaderboards and friendly competition
+- [ ] Goal marketplace and community templates
+
+### **Phase 4: Integration & AI**
+- [ ] Calendar integration (Google, Outlook)
+- [ ] Third-party app connections (Todoist, Notion)
+- [ ] AI-powered goal suggestions
+- [ ] Smart habit recommendations
+
+### **Phase 5: Enterprise Features**
+- [ ] Organization-level workspaces
+- [ ] Advanced role management
+- [ ] Custom branding and themes
+- [ ] API for third-party integrations
+
+## 📁 Project Structure
+
 ```
-Modern-To-Do-List/
-├── app.py                 # Main Flask application
-├── config.py             # Configuration settings
-├── requirements.txt      # Python dependencies
-├── streakify.db         # SQLite database (auto-created)
-├── static/
-│   ├── style.css        # Main stylesheet
-│   ├── app.js          # Frontend JavaScript
-│   └── auth.css        # Authentication styles
-└── templates/
-    ├── index.html       # Main application
-    ├── login.html       # Login page
-    ├── register.html    # Registration page
-    └── email/
-        └── streak_reminder.html  # Email template
+Streakify/
+├── streakify/                   # Main application
+│   ├── app/                     # Next.js App Router
+│   │   ├── (auth)/             # Authentication pages
+│   │   ├── api/                # API endpoints
+│   │   │   ├── auth/           # Authentication routes
+│   │   │   ├── goals/          # Goal management
+│   │   │   ├── tasks/          # Task operations
+│   │   │   └── workspaces/     # Workspace management
+│   │   ├── dashboard/          # Main dashboard
+│   │   ├── goals/              # Goal pages
+│   │   ├── tasks/              # Task pages
+│   │   └── workspaces/         # Workspace pages
+│   ├── components/             # React components
+│   │   ├── providers/          # Context providers
+│   │   ├── ui/                 # Reusable UI components
+│   │   ├── goals/              # Goal-specific components
+│   │   ├── tasks/              # Task components
+│   │   └── workspaces/         # Workspace components
+│   ├── lib/                    # Utilities & configuration
+│   │   ├── auth.ts             # Authentication config
+│   │   ├── supabase.ts         # Database client
+│   │   ├── store.ts            # State management
+│   │   ├── validators.ts       # Schema validation
+│   │   └── utils.ts            # Helper functions
+│   └── public/                 # Static assets
+├── database/
+│   └── schema.sql              # Database setup
+├── docs/
+│   ├── SETUP.md               # Installation guide
+│   └── API.md                 # API documentation
+├── requirements.txt           # Dependencies list
+└── README.md                  # This file
 ```
-
-### Adding Features
-1. **Database Changes**: Update schema in `init_db()` function
-2. **API Endpoints**: Add routes in `app.py`
-3. **Frontend**: Update JavaScript in `app.js`
-4. **Styling**: Modify CSS in `style.css`
-
-## 🚀 Deployment
-
-### Local Development
-```bash
-python app.py
-```
-
-### Production Deployment
-1. **Set Environment Variables**:
-   ```bash
-   export FLASK_ENV=production
-   export SECRET_KEY=your-production-secret-key
-   ```
-
-2. **Use Production WSGI Server**:
-   ```bash
-   pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:5000 app:app
-   ```
-
-3. **Database**: Consider PostgreSQL for production
-4. **Email**: Configure production SMTP settings
-5. **Security**: Enable HTTPS and secure headers
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📝 License
+## 📄 License
 
-This project is open source and available under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support & Troubleshooting
+## 🙏 Acknowledgments
 
-### Common Issues:
-
-**Registration fails with RLS error:**
-```sql
--- Run this in Supabase SQL Editor
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-```
-
-**Supabase connection issues:**
-- Verify URL and anon key in `.env`
-- Check if tables exist in Supabase dashboard
-- Ensure you ran `supabase_setup.sql`
-
-**Email notifications not working:**
-- Use Gmail App Password (16 digits)
-- Enable 2-Factor Authentication first
-- Check spam folder
-
-**General troubleshooting:**
-1. Check console output for error messages
-2. Verify all dependencies are installed
-3. Ensure Supabase project is active
-4. Check browser console for JavaScript errors
-
-## 🎯 Roadmap
-
-- [ ] Mobile app development
-- [ ] Advanced analytics and reporting
-- [ ] Integration with fitness trackers
-- [ ] Social features and leaderboards
-- [ ] API for third-party integrations
-- [ ] Advanced notification options
-- [ ] Goal templates and suggestions
+- Built with [Next.js](https://nextjs.org/) and [Supabase](https://supabase.com/)
+- UI components inspired by [Radix UI](https://www.radix-ui.com/)
+- Icons by [Lucide React](https://lucide.dev/)
 
 ---
 
-**Built with ❤️ for productivity enthusiasts and teams who want to build lasting habits together!**
+**Ready to streakify your goals?** 🔥 [Get started with the setup guide](docs/SETUP.md)
