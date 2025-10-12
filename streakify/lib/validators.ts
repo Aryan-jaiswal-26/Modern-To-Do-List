@@ -27,7 +27,7 @@ export const goalSchema = z.object({
 });
 
 export const inviteSchema = z.object({
-  workspaceId: z.string(),
+  workspaceId: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val) : val),
   expiresAt: z.string().datetime().nullable().optional()
 });
 

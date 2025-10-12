@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { useUIStore } from "@/lib/store";
 
 type Workspace = {
-  id: string;
+  id: number;
   name: string;
   role: string;
 };
@@ -21,7 +21,7 @@ export function WorkspaceSwitcher() {
 
   useEffect(() => {
     if (!workspaceId && data?.length) {
-      setWorkspaceId(data[0].id);
+      setWorkspaceId(String(data[0].id));
     }
   }, [workspaceId, data, setWorkspaceId]);
 
@@ -36,11 +36,11 @@ export function WorkspaceSwitcher() {
   return (
     <div className="flex flex-wrap gap-3">
       {data.map((workspace) => {
-        const active = workspaceId === workspace.id;
+        const active = workspaceId === String(workspace.id);
         return (
           <motion.button
             key={workspace.id}
-            onClick={() => setWorkspaceId(workspace.id)}
+            onClick={() => setWorkspaceId(String(workspace.id))}
             className={`relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
               active ? "text-slate-900" : "text-slate-200"
             }`}
